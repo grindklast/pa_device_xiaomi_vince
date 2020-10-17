@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-$(call inherit-product, vendor/xiaomi/ysl/ysl-vendor.mk)
+$(call inherit-product, vendor/xiaomi/vince/vince-vendor.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_o_mr1.mk)
 
 # Overlay
@@ -47,14 +47,14 @@ PRODUCT_PACKAGES += \
     android.hardware.ir@1.0-service
 
 # Properties
--include device/xiaomi/ysl/prop.mk
+-include device/xiaomi/vince/prop.mk
 
 # Ramdisk
 PRODUCT_PACKAGES += \
     init.goodix.sh \
     init.recovery.qcom.rc \
     init.recovery.qcom.usb.rc \
-    init.ysl.rc
+    init.vince.rc
 
 # Sensors
 PRODUCT_COPY_FILES += \

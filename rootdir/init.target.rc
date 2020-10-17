@@ -28,7 +28,6 @@
 #
 on early-init
     write /proc/sys/kernel/sched_boost 1
-    symlink /data/tombstones /tombstones
 
 on fs
     wait /dev/block/platform/soc/${ro.boot.bootdevice}
@@ -37,9 +36,21 @@ on fs
 
     chown root system /mnt/vendor/persist
     chmod 0771 /mnt/vendor/persist
+    mkdir /mnt/vendor/persist/alarm 0770 system system
     mkdir /mnt/vendor/persist/data 0700 system system
     mkdir /mnt/vendor/persist/bms 0700 root system
     restorecon_recursive /mnt/vendor/persist
+
+on init
+    setprop ro.vendor.hw.dualsim ${ro.boot.dualsim}
+    setprop ro.vendor.hw.device ${ro.boot.device}
+    setprop ro.vendor.hw.radio ${ro.boot.radio}
+
+on property:ro.vendor.hw.dualsim=true
+    setprop persist.radio.multisim.config dsds
+
+on property:ro.vendor.hw.dualsim=false
+    setprop persist.radio.multisim.config ""
 
 on init
     write /dev/stune/foreground/schedtune.sched_boost_no_override 1
@@ -50,42 +61,26 @@ on init
     write /dev/stune/top-app/schedtune.colocate 1
     write /sys/module/qpnp_rtc/parameters/poweron_alarm 1
 
+# Add a cpuset for the camera daemon
+    mkdir /dev/cpuset/camera-daemon
+    write /dev/cpuset/camera-daemon/cpus 0-7
+    write /dev/cpuset/camera-daemon/mems 0
+    chown system system /dev/cpuset/camera-daemon
+    chown system system /dev/cpuset/camera-daemon/tasks
+    chmod 0664 /dev/cpuset/camera-daemon/tasks
+
 on post-fs
-    # set RLIMIT_MEMLOCK to 64MB
-    setrlimit 8 67108864 67108864
     start vendor.qseecomd
     wait_for_prop vendor.sys.listeners.registered true
     write /dev/ipa 1
 
 on post-fs-data
-    mkdir /data/tombstones 0771 system system
-    mkdir /tombstones/modem 0771 system system
-    mkdir /tombstones/lpass 0771 system system
-    mkdir /tombstones/wcnss 0771 system system
-    mkdir /tombstones/dsps 0771 system system
-    mkdir /persist/data/sfs 0700 system system
-    mkdir /persist/data/tz 0700 system system
-    mkdir /persist/qti_fp 0700 system system
-    mkdir /data/misc/seemp 0700 system system
-    mkdir /data/misc/audio_pp 0771 media audio
-
-# modify by zhoudan for fingerprint
-    mkdir /data/vendor/fpc 0700 system system
-    mkdir /data/vendor/goodix 0700 system system
-    chmod 0644 /dev/goodix_fp
-    chown system system /dev/goodix_fp
-
-# modify by zhoudan for fingerprint
-    copy /data/vendor/fpc/user.db /data/vendor_de/0/fpdata/user.db
-    chown system system /data/vendor_de/0/fpdata/user.db
-    rm /data/vendor/fpc/user.db
-
 #Create folder for mm-qcamera-daemon
 mkdir /data/vendor/camera 0770 camera camera
 mkdir /data/misc/camera 0770 camera camera
 
 #start camera server as daemon
-service qcamerasvr /system/vendor/bin/mm-qcamera-daemon
+service qcamerasvr /vendor/bin/mm-qcamera-daemon
     class late_start
     user camera
     group camera system inet input graphics
@@ -95,7 +90,7 @@ service qcamerasvr /system/vendor/bin/mm-qcamera-daemon
 service vendor.per_mgr /vendor/bin/pm-service
     class core
     user system
-    group system
+    group system net_raw
     ioprio rt 4
     writepid /dev/cpuset/system-background/tasks
 
@@ -111,6 +106,7 @@ on property:init.svc.vendor.per_mgr=running
 
 on property:sys.shutdown.requested=*
     stop vendor.per_proxy
+    stop vendor.ims_rtp_daemon
 
 service vendor.qseecomd /vendor/bin/qseecomd
    class core
@@ -118,7 +114,7 @@ service vendor.qseecomd /vendor/bin/qseecomd
    group root
    writepid /dev/cpuset/system-background/tasks
 
-service thermal-engine /system/vendor/bin/thermal-engine
+service thermal-engine /vendor/bin/thermal-engine
    class main
    user root
    socket thermal-send-client stream 0666 system system
@@ -128,49 +124,16 @@ service thermal-engine /system/vendor/bin/thermal-engine
    group root
    writepid /dev/cpuset/system-background/tasks
 
-service adsprpcd /system/vendor/bin/adsprpcd
+service adsprpcd /vendor/bin/adsprpcd
    class main
    user media
    group media
 
-service wcnss-service /system/vendor/bin/wcnss_service
+service wcnss-service /vendor/bin/wcnss_service
     class main
     user system
     group system wifi radio
     oneshot
-
-service vendor.imsqmidaemon /system/vendor/bin/imsqmidaemon
-    class main
-    user system
-    socket ims_qmid stream 0660 system radio
-    group radio log diag
-    writepid /dev/cpuset/system-background/tasks
-
-service vendor.imsdatadaemon /system/vendor/bin/imsdatadaemon
-    class main
-    user system
-    socket ims_datad stream 0660 system radio
-    group system wifi radio inet log diag
-    writepid /dev/cpuset/system-background/tasks
-    disabled
-
-on property:vendor.ims.QMI_DAEMON_STATUS=1
-    start vendor.imsdatadaemon
-
-service vendor.ims_rtp_daemon /system/vendor/bin/ims_rtp_daemon
-   class main
-   user system
-   group radio diag inet log
-   writepid /dev/cpuset/system-background/tasks
-
-service vendor.imsrcsservice /system/vendor/bin/imsrcsd
-   class main
-   user system
-   group radio diag inet log wakelock
-   writepid /dev/cpuset/system-background/tasks
-
-on property:vendor.ims.DATA_DAEMON_STATUS=1
-   restart vendor.ims_rtp_daemon
 
 on property:init.svc.surfaceflinger=stopped
     stop ppd
@@ -190,13 +153,13 @@ on property:init.svc.zygote=running
 on property:init.svc.zygote=restarting
     stop ppd
 
-service energy-awareness /system/vendor/bin/energy-awareness
+service energy-awareness /vendor/bin/energy-awareness
     class main
     user root
     group system
     oneshot
 
-service vendor.hvdcp_opti /system/vendor/bin/hvdcp_opti
+service vendor.hvdcp_opti /vendor/bin/hvdcp_opti
     class main
     user root
     group system wakelock
@@ -206,23 +169,18 @@ on charger
     write /sys/devices/system/cpu/cpu3/online 0
     write /sys/module/lpm_levels/parameters/sleep_disabled 0
     start vendor.hvdcp_opti
+    start vendor.power_off_alarm
     start thermal-engine
 
 on boot
-    # add a cpuset for the camera daemon
-    # we want all cores for camera
-    mkdir /dev/cpuset/camera-daemon
-    write /dev/cpuset/camera-daemon/cpus 0-7
-    write /dev/cpuset/camera-daemon/mems 0
-    chown system system /dev/cpuset/camera-daemon
-    chown system system /dev/cpuset/camera-daemon/tasks
-    chmod 0664 /dev/cpuset/camera-daemon/tasks
     chown system system /sys/kernel/hbtp/display_pwr
 
-# For generic DT2W
-    chown system system /dev/input/event1
-    chown system system /sys/devices/platform/soc/78b7000.i2c/i2c-3/3-0038/fts_gesture_mode
-    chmod 0664 /sys/devices/platform/soc/78b7000.i2c/i2c-3/3-0038/fts_gesture_mode
+# Update cpusets on boot and we want better load balancing
+    write /dev/cpuset/top-app/cpus 0-7
+    write /dev/cpuset/foreground/cpus 0-6
+    write /dev/cpuset/background/cpus 0-1
+    write /dev/cpuset/system-background/cpus 0-3
+    write /dev/cpuset/restricted/cpus 0-3
 
 # access permission for wlan
     chown system system /mnt/vendor/persist/WCNSS_qcom_wlan_nv.bin
@@ -242,3 +200,37 @@ service ppd /vendor/bin/mm-pp-dpps
     group system graphics
     socket pps stream 0660 system system
     disabled
+
+on boot
+    # add for goodix 
+    chown system system /dev/goodix_fp
+    chmod 0644 /dev/goodix_fp
+    
+    # add for fpc 
+    chown system system /sys/devices/platform/soc/soc:fpc1020/compatible_all
+    chmod 0664 /sys/devices/platform/soc/soc:fpc1020/compatible_all
+    chown system system /sys/devices/platform/soc/soc:fpc1020/irq
+    chmod 0660 /sys/devices/platform/soc/soc:fpc1020/irq
+    chown system system /sys/devices/platform/soc/soc:fpc1020/hw_reset
+    chmod 0660 /sys/devices/platform/soc/soc:fpc1020/hw_reset
+    chown system system /sys/devices/platform/soc/soc:fpc1020/wakeup_enable
+    chmod 0660 /sys/devices/platform/soc/soc:fpc1020/wakeup_enable
+    chown system system /sys/devices/platform/soc/soc:fpc1020/fingerdown_wait
+    chmod 0660 /sys/devices/platform/soc/soc:fpc1020/fingerdown_wait
+
+    # dt2w
+    chmod 0666 /sys/devices/platform/soc/78b7000.i2c/i2c-3/3-0020/input/input2/wake_gesture
+    chown system system /sys/devices/platform/soc/78b7000.i2c/i2c-3/3-0020/input/input2/wake_gesture
+    write /sys/devices/platform/soc/78b7000.i2c/i2c-3/3-0020/input/input2/wake_gesture 1
+
+on property:sys.fp.vendor=goodix
+   setprop ro.boot.fpsensor goodix
+   setprop persist.sys.fp.vendor goodix
+
+on property:sys.fp.vendor=FPC
+   setprop ro.boot.fpsensor fpc
+
+service goodix_script /vendor/bin/init.goodix.sh
+    class late_start
+    user system
+    oneshot

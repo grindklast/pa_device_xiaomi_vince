@@ -16,7 +16,7 @@
 # Inherit from common msm8953-common
 -include device/xiaomi/msm8953-common/BoardConfigCommon.mk
 
-DEVICE_PATH := device/xiaomi/ysl
+DEVICE_PATH := device/xiaomi/vince
 
 # Filesystem
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
@@ -27,7 +27,7 @@ TARGET_COPY_OUT_VENDOR := vendor
 DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/manifest.xml
 
 # Kernel
-TARGET_KERNEL_CONFIG := ysl-perf_defconfig
+TARGET_KERNEL_CONFIG := vince-perf_defconfig
 TARGET_KERNEL_VERSION := 4.9
 TARGET_KERNEL_CLANG_COMPILE := true
 TARGET_KERNEL_CLANG_VERSION := 11.0
@@ -41,7 +41,7 @@ BOARD_USERDATAIMAGE_PARTITION_SIZE := 25765043200 # 25765059584 - 16384
 BOARD_VENDORIMAGE_PARTITION_SIZE := 1073741824
 
 # Power
-TARGET_TAP_TO_WAKE_NODE := "/dev/input/event1"
+TARGET_TAP_TO_WAKE_NODE := "/sys/devices/platform/soc/78b7000.i2c/i2c-3/3-0020/input/input2/wake_gesture"
 
 # RIL
 ENABLE_VENDOR_RIL_SERVICE := true
@@ -53,4 +53,4 @@ VENDOR_SECURITY_PATCH := 2020-04-05
 BOARD_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy
 
 # Inherit from the proprietary version
--include vendor/xiaomi/ysl/BoardConfigVendor.mk
+-include vendor/xiaomi/vince/BoardConfigVendor.mk

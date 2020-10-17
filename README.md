@@ -1,4 +1,4 @@
-# Device Tree for Xiaomi Redmi S2 (ysl)
+# Device Tree for Xiaomi Redmi 5 Plus (vince)
 
 ## Spec Sheet
 
@@ -8,17 +8,16 @@
 | Chipset                 | Qualcomm MSM8953 Snapdragon 625   |
 | GPU                     | Adreno 506                        |
 | Memory                  | 3/4 GB                            |
-| Shipped Android Version | 8.1.0                             |
+| Shipped Android Version | 7.1.2                             |
 | Storage                 | 32/64 GB                          |
 | MicroSD                 | Up to 256 GB                      |
-| Battery                 | 3080 mAh (non-removable)          |
-| Dimensions              | 160.7 x 77.3 x 8.1 mm             |
-| Display                 | 720 x 1440  pixels (~269 ppi)     |
-| Rear Camera             | 12 MP, f/2.2, 1.25 μm, PDAF       |
-|                         | 5 MP, f/2.2, 1.12 μm, depth sensor|
-| Front Camera            | 5 MP, f/2.0                       |
-| Announced Date          | May 2018                          |
+| Battery                 | 4000 mAh (non-removable)          |
+| Dimensions              | 151 x 76 x 8.5 mm                 |
+| Display                 | 1080x2160 pixels, 5.99 (~401 PPI) |
+| Rear Camera             | 12 MP, LED flash                  |
+| Front Camera            | 5 MP, LED flash                   |
+| Release Date            | February 2018                     |
 
 ## Device Picture
 
-![Xiaomi Redmi S2](https://fdn2.gsmarena.com/vv/pics/xiaomi/xiaomi-redmi-s2-5.jpg "Xiaomi Redmi S2")
+![Redmi 5 Plus](https://cdn2.gsmarena.com/vv/pics/xiaomi/xiaomi-redmi-5-plus-2.jpg "Redmi 5 Plus")

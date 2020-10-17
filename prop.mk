@@ -17,4 +17,4 @@ persist.camera.eis.enable=1
 
 # Display
 PRODUCT_PROPERTY_OVERRIDES += \
-ro.sf.lcd_density=320
+ro.sf.lcd_density=420
